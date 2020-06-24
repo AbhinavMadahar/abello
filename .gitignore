@@ -1,0 +1,11 @@
+.ipynb_checkpoints
+__pycache__
+*.gexf
+*.graphml
+*.edgelist
+*.png
+*.mp4
+*.pickle
+*.csv
+*.npy
+*.cys
