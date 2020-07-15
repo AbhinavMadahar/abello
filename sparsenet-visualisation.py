@@ -57,7 +57,7 @@ def vertex_type(vertex):
             return i+1
     return 0
 
-def plot_graph(G: nx.Graph, output_file: str = None, calculate_pos:bool =False):
+def plot_graph(G: nx.Graph, output_file: str = None, calculate_pos:bool = False):
     if calculate_pos:
         pos = nx.drawing.layout.spring_layout(G)
         for node in G.nodes:
@@ -119,25 +119,22 @@ def plot_graph(G: nx.Graph, output_file: str = None, calculate_pos:bool =False):
         colors.append(color)
     node_trace.marker.color = colors
 
-    fig = go.Figure(data=[edge_trace, node_trace],
-                 layout=go.Layout(
-                    title='<br>Network graph made with Python',
-                    titlefont_size=16,
-                    showlegend=False,
-                    hovermode='closest',
-                    margin=dict(b=20,l=5,r=5,t=40),
-                    annotations=[ dict(
-                        text="Python code: <a href='https://plotly.com/ipython-notebooks/network-graphs/'> https://plotly.com/ipython-notebooks/network-graphs/</a>",
-                        showarrow=False,
-                        xref="paper", yref="paper",
-                        x=0.005, y=-0.002 ) ],
-                    xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                    yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
-                    )
+    figure_params = {
+        'data': [edge_trace, node_trace],
+        'layout': go.Layout(
+           title='Network graph made with Python',
+           titlefont_size=16,
+           showlegend=False,
+           hovermode='closest',
+           margin=dict(b=20,l=5,r=5,t=40),
+           xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+           yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
+    }
+    fig = go.Figure(**figure_params)
     if output_file:
         fig.write_html(output_file, auto_open=True)
     
-    return fig
+    return figure_params, fig
 
 
 # First, we need to get the distance matrix.
@@ -155,15 +152,12 @@ vertex_name_to_index = { node:i for i, node in enumerate(connected_component.nod
 # In[ ]:
 
 
-print('Finding configuration')
 configuration = []
 for path in sparsenet(connected_component, distance_matrix, vertex_name_to_index):
     print(len(path))
-    if len(path) > 6:
-        configuration.append(path)
-    else:
+    if len(path) < 6:
         break
-print('Configuration found')
+    configuration.append(path)
 
 
 # Ok, now we can plot the SparseNet.
@@ -176,6 +170,8 @@ import dash_html_components as html
 import plotly.express as px
 import pandas as pd
 
+from dash.dependencies import Input, Output
+
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -184,20 +180,42 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 # see https://plotly.com/python/wide-form/ for more options
 df = pd.DataFrame({"x": [1, 2, 3], "SF": [4, 1, 2], "Montreal": [2, 4, 5]})
 
-fig = px.bar(df, x="x", y=["SF", "Montreal"], barmode="group")
+sparsenet_fig_params, sparsenet_fig = plot_graph(G.subgraph(sum((path for path in configuration if len(path) >= 6), [])))
 
 app.layout = html.Div(children=[
-    html.H1(children='Hello Dash'),
+    html.H1(children='SparseNet'),
 
     html.Div(children='''
-        Dash: A web application framework for Python.
+        Made by Abhinav Madahar, Fatima Al-Saadeh, Die Hu, and Prof James Abello Monedero.
     '''),
 
     dcc.Graph(
         id='sparsenet',
-        figure=plot_graph(G.subgraph(sum((path for path in configuration if len(path) >= 6), [])), None, calculate_pos=True)
-    )
+        figure=sparsenet_fig
+    ),
+    
+    dcc.Interval(
+        id='interval-component',
+        interval=1000,
+        n_intervals=0
+    ),
+    
+    html.Div(id='live-update-text')
 ])
+
+import json
+
+@app.callback(Output('sparsenet', 'figure'),
+              [Input('sparsenet', 'clickData')])
+def update_metrics(clickData):
+    try:
+        sizes = sparsenet_fig_params['data'][1].marker.size
+        point = clickData['points'][0]['pointIndex']
+        sizes = sizes + 2 * sizes * np.eye(len(sizes))[point]
+        sparsenet_fig_params['data'][1].marker.size = sizes
+    except TypeError:
+        pass
+    return go.Figure(**sparsenet_fig_params)
 
 print('Running server...')
 app.run_server(debug=True, host='ilab.cs.rutgers.edu', port=4405)
