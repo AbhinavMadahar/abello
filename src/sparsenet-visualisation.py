@@ -65,7 +65,6 @@ def start_bfs_from_node(n, starting_path, ending_path):
     sparsenet_graph = G.subgraph(sum(itertools.islice(configuration, starting_path, ending_path), [])).copy()
     sparsenet_fig_params = plot_graph(sparsenet_graph)
     
-    # now, we decide what 
     frame = bfs_from_leaves_frames[n]
     highlighted = [i for i, vertex in enumerate(sparsenet_graph.nodes()) if vertex in frame]
     colors = ['white' if i in highlighted else color for i, color in enumerate(original_sparsenet_colors)]

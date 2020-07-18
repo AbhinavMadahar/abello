@@ -4,6 +4,10 @@ import numpy as np
 import plotly.graph_objects as go
 
 def plot_graph(G: nx.Graph):
+    pos = nx.spring_layout(G)
+    for node in G.nodes:
+            G.nodes[node]['pos'] = list(pos[node]) 
+    
     edge_x = []
     edge_y = []
     for edge in G.edges():
