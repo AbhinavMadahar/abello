@@ -57,10 +57,12 @@ app.layout = html.Div(children=[
         id='cytoscape',
         elements=[],
         layout={'name': 'preset'}
-    )
+    ),
+    dcc.Graph(id='path-lengths')
 ])
 
-@app.callback(Output('cytoscape', 'elements'), 
+
+@app.callback([Output('cytoscape', 'elements'), Output('path-lengths', 'figure')], 
               [Input('bfs-frame', 'value'), Input('sparsenet-start-path', 'value'), Input('sparsenet-end-path', 'value')])
 def render_interactive_graph_plot(n, starting_path, ending_path):
     global configuration
@@ -78,7 +80,11 @@ def render_interactive_graph_plot(n, starting_path, ending_path):
              for node_id, (x, y) in pos.items()]
     edges = [{'data': {'source': src, 'target': dest}} for src, dest in sparsenet_graph.edges()]
     
-    return nodes + edges
+    path_lengths = pd.Series(len(path) for path in configuration).value_counts()
+    path_lengths = pd.DataFrame({'length': path_lengths.index, 'freq': path_lengths}).sort_index()
+    
+    return nodes + edges, px.line(path_lengths, x="length", y="freq", title='Number of paths of each length')
+
 
 @app.callback(Output('graph-description', 'children'), 
               [Input('cytoscape', 'elements')])
