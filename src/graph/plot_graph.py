@@ -4,7 +4,7 @@ import numpy as np
 import plotly.graph_objects as go
 
 def plot_graph(G: nx.Graph):
-    pos = nx.spring_layout(G)
+    pos = nx.spring_layout(G, iterations=200)
     for node in G.nodes:
             G.nodes[node]['pos'] = list(pos[node]) 
     

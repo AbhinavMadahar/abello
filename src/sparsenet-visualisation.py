@@ -1,10 +1,12 @@
 import dash
 import dash_core_components as dcc
+import dash_cytoscape as cyto
 import dash_html_components as html
 import dash_daq as daq
 import itertools
 import json
 import math
+import netgraph
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -40,22 +42,27 @@ sparsenet_fig_params = plot_graph(sparsenet_graph)
 leaves = [src for src, destinations in sparsenet_graph.adjacency() if len(destinations) == 1]
 bfs_from_leaves_frames = list(parallel_bfs(sparsenet_graph, leaves))
 
+positions = {}
+
 app = dash.Dash()
 app.layout = html.Div(children=[
-    dcc.Graph(id='sparsenet', figure=go.Figure(**sparsenet_fig_params), style={'height': '80vh'}),
     html.Label('Frame of leaf-originated BFS'),
     daq.NumericInput(id='bfs-frame', value=0, min=0, max=len(bfs_from_leaves_frames)),
     html.Label('First path in SparseNet to include'),
     daq.NumericInput(id='sparsenet-start-path', value=0, min=0, max=10 ** 6),
     html.Label('Last path in SparseNet to include'),
     daq.NumericInput(id='sparsenet-end-path', value=1, min=1, max=10 ** 6),
-    html.Div(id='live-update-text')
+    html.Div(id='graph-description'),
+    cyto.Cytoscape(
+        id='cytoscape',
+        elements=[],
+        layout={'name': 'preset'}
+    )
 ])
 
-original_sparsenet_colors = sparsenet_fig_params['data'][1].marker.color
-@app.callback(Output('sparsenet', 'figure'), 
+@app.callback(Output('cytoscape', 'elements'), 
               [Input('bfs-frame', 'value'), Input('sparsenet-start-path', 'value'), Input('sparsenet-end-path', 'value')])
-def start_bfs_from_node(n, starting_path, ending_path):
+def render_interactive_graph_plot(n, starting_path, ending_path):
     global configuration
     if ending_path > len(configuration):
         try:
@@ -63,13 +70,21 @@ def start_bfs_from_node(n, starting_path, ending_path):
         except StopIteration:
             pass
     sparsenet_graph = G.subgraph(sum(itertools.islice(configuration, starting_path, ending_path), [])).copy()
-    sparsenet_fig_params = plot_graph(sparsenet_graph)
+    if (starting_path, ending_path) not in positions:
+        positions[(starting_path, ending_path)] = nx.spring_layout(sparsenet_graph, iterations=200)
+    pos = positions[(starting_path, ending_path)]
     
-    frame = bfs_from_leaves_frames[n]
-    highlighted = [i for i, vertex in enumerate(sparsenet_graph.nodes()) if vertex in frame]
-    colors = ['white' if i in highlighted else color for i, color in enumerate(original_sparsenet_colors)]
-    sparsenet_fig_params['data'][1].marker.color = colors
+    nodes = [{'data': {'id': node_id}, 'position': { 'x': x * 1000, 'y': y * 1000 }} 
+             for node_id, (x, y) in pos.items()]
+    edges = [{'data': {'source': src, 'target': dest}} for src, dest in sparsenet_graph.edges()]
     
-    return go.Figure(**sparsenet_fig_params)
+    return nodes + edges
+
+@app.callback(Output('graph-description', 'children'), 
+              [Input('sparsenet-start-path', 'value'), Input('sparsenet-end-path', 'value')])
+def update_number_of_vertices(starting_path, ending_path):
+    sparsenet_graph = G.subgraph(sum(itertools.islice(configuration, starting_path, ending_path), [])).copy()
+    return html.P(str(sparsenet_graph.number_of_nodes()) + ' vertices and ' + str(sparsenet_graph.number_of_edges()) + ' edges.')
+
 
 app.run_server(debug=True, host='ilab.cs.rutgers.edu', port=4405)
