@@ -81,10 +81,11 @@ def render_interactive_graph_plot(n, starting_path, ending_path):
     return nodes + edges
 
 @app.callback(Output('graph-description', 'children'), 
-              [Input('sparsenet-start-path', 'value'), Input('sparsenet-end-path', 'value')])
-def update_number_of_vertices(starting_path, ending_path):
-    sparsenet_graph = G.subgraph(sum(itertools.islice(configuration, starting_path, ending_path), [])).copy()
-    return html.P(str(sparsenet_graph.number_of_nodes()) + ' vertices and ' + str(sparsenet_graph.number_of_edges()) + ' edges.')
+              [Input('cytoscape', 'elements')])
+def update_number_of_vertices(elements):
+    number_of_nodes = len([element for element in elements if 'source' not in element['data']])
+    number_of_edges = len([element for element in elements if 'source' in element['data']])
+    return html.P(str(number_of_nodes) + ' vertices and ' + str(number_of_edges) + ' edges.')
 
 
 app.run_server(debug=True, host='ilab.cs.rutgers.edu', port=4405)
