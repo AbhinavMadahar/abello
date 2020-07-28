@@ -52,19 +52,18 @@ app.layout = html.Div(children=[
     daq.NumericInput(id='sparsenet-start-path', value=0, min=0, max=10 ** 6),
     html.Label('Last path in SparseNet to include'),
     daq.NumericInput(id='sparsenet-end-path', value=1, min=1, max=10 ** 6),
+    dcc.Checklist(id='enable-relayout', options=[{'label': 'Continue to relayout', 'value': 'relayout'}, ], value=['relayout']),
     html.Div(id='graph-description'),
-    cyto.Cytoscape(
-        id='cytoscape',
-        elements=[],
-        layout={'name': 'preset'}
-    ),
-    dcc.Graph(id='path-lengths')
+    cyto.Cytoscape(id='cytoscape', elements=[], layout={'name': 'preset'}),
+    dcc.Graph(id='path-lengths'),
+    dcc.Interval(id='relayout', interval=1000, n_intervals=0)
 ])
 
 
-@app.callback([Output('cytoscape', 'elements'), Output('path-lengths', 'figure')], 
-              [Input('bfs-frame', 'value'), Input('sparsenet-start-path', 'value'), Input('sparsenet-end-path', 'value')])
-def render_interactive_graph_plot(n, starting_path, ending_path):
+@app.callback([Output('cytoscape', 'elements'), Output('path-lengths', 'figure'), Output('relayout', 'max_intervals')], 
+              [Input('bfs-frame', 'value'), Input('sparsenet-start-path', 'value'), Input('sparsenet-end-path', 'value'), Input('relayout', 'n_intervals'), Input('enable-relayout', 'value')])
+def render_interactive_graph_plot(n, starting_path, ending_path, n_intervals, enable_relayout):
+    enable_relayout = 'relayout' in enable_relayout
     global configuration
     if ending_path > len(configuration):
         try:
@@ -73,7 +72,9 @@ def render_interactive_graph_plot(n, starting_path, ending_path):
             pass
     sparsenet_graph = G.subgraph(sum(itertools.islice(configuration, starting_path, ending_path), [])).copy()
     if (starting_path, ending_path) not in positions:
-        positions[(starting_path, ending_path)] = nx.spring_layout(sparsenet_graph, iterations=200)
+        positions[(starting_path, ending_path)] = nx.spring_layout(sparsenet_graph, iterations=10)
+    elif enable_relayout:
+        positions[(starting_path, ending_path)] = nx.spring_layout(sparsenet_graph, pos=positions[(starting_path, ending_path)], iterations=10)
     pos = positions[(starting_path, ending_path)]
     
     nodes = [{'data': {'id': node_id}, 'position': { 'x': x * 1000, 'y': y * 1000 }} 
@@ -83,7 +84,8 @@ def render_interactive_graph_plot(n, starting_path, ending_path):
     path_lengths = pd.Series(len(path) for path in configuration).value_counts()
     path_lengths = pd.DataFrame({'length': path_lengths.index, 'freq': path_lengths}).sort_index()
     
-    return nodes + edges, px.line(path_lengths, x="length", y="freq", title='Number of paths of each length')
+    print(-1 if enable_relayout else 0)
+    return nodes + edges, px.line(path_lengths, x="length", y="freq", title='Number of paths of each length'), -1 if enable_relayout else 0
 
 
 @app.callback(Output('graph-description', 'children'), 
