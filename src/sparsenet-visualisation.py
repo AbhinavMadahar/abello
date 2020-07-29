@@ -15,6 +15,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import random as R
 import threading
+import time
 
 from dash.dependencies import Input, Output
 from graph.plot_graph import plot_graph
@@ -47,6 +48,7 @@ positions = {}
 
 app = dash.Dash()
 app.layout = html.Div(children=[
+    html.P(id='edges-ready', children='1 edge ready'),
     html.Label('Frame of leaf-originated BFS'),
     daq.NumericInput(id='bfs-frame', value=0, min=0, max=len(bfs_from_leaves_frames)),
     html.Label('First path in SparseNet to include'),
@@ -64,39 +66,41 @@ app.layout = html.Div(children=[
 def find_sparsenet_in_background():
     for path in sparsenet_generator:
         configuration.append(path)
+        
+        if len(configuration) % 100 == 0:
+            sparsenet_graph = G.subgraph(sum(configuration, []))
+            positions[len(configuration)] = nx.spring_layout(sparsenet_graph, iterations=min(len(configuration), 500))
+
 
 find_sparsenet_in_background_thread = threading.Thread(target=find_sparsenet_in_background)
 find_sparsenet_in_background_thread.daemon = True
 find_sparsenet_in_background_thread.start()
 
 
-@app.callback([Output('cytoscape', 'elements'), Output('path-lengths', 'figure'), Output('relayout', 'max_intervals')], 
+@app.callback([Output('cytoscape', 'elements'), Output('path-lengths', 'figure'), Output('relayout', 'max_intervals'), Output('edges-ready', 'children')], 
               [Input('bfs-frame', 'value'), Input('sparsenet-start-path', 'value'), Input('sparsenet-end-path', 'value'), Input('relayout', 'n_intervals'), Input('enable-relayout', 'value')])
 def render_interactive_graph_plot(n, starting_path, ending_path, n_intervals, enable_relayout):
+    print(positions.keys())
     enable_relayout = 'relayout' in enable_relayout
-    global configuration
-    print('len =', len(configuration))
-    if ending_path > len(configuration):
-        try:
-            configuration += itertools.islice(sparsenet_generator, ending_path - len(configuration))
-        except StopIteration:
-            pass
+    ending_path = min(ending_path, 100 * (ending_path // 100 + 1))
+
     sparsenet_graph = G.subgraph(sum(itertools.islice(configuration, starting_path, ending_path), [])).copy()
-    if (starting_path, ending_path) not in positions:
-        positions[(starting_path, ending_path)] = nx.spring_layout(sparsenet_graph, iterations=10)
-    elif enable_relayout:
-        positions[(starting_path, ending_path)] = nx.spring_layout(sparsenet_graph, pos=positions[(starting_path, ending_path)], iterations=10)
-    pos = positions[(starting_path, ending_path)]
     
+    if enable_relayout:
+        positions[100 * (ending_path // 100 + 1)] = nx.spring_layout(
+            G.subgraph(sum(itertools.islice(configuration, 0, 100 * (ending_path // 100 + 1)), [])), 
+            pos=positions[100 * (ending_path // 100 + 1)], iterations=10)
+        
+    pos = {node:position for node, position in positions[100 * (ending_path // 100 + 1)].items() if node in sparsenet_graph.nodes()}
+
     nodes = [{'data': {'id': node_id}, 'position': { 'x': x * 1000, 'y': y * 1000 }} 
              for node_id, (x, y) in pos.items()]
     edges = [{'data': {'source': src, 'target': dest}} for src, dest in sparsenet_graph.edges()]
-    
+
     path_lengths = pd.Series(len(path) for path in configuration).value_counts()
     path_lengths = pd.DataFrame({'length': path_lengths.index, 'freq': path_lengths}).sort_index()
-    
-    print(-1 if enable_relayout else 0)
-    return nodes + edges, px.line(path_lengths, x="length", y="freq", title='Number of paths of each length'), -1 if enable_relayout else 0
+
+    return nodes + edges, px.line(path_lengths, x="length", y="freq", title='Number of paths of each length'), -1 if enable_relayout else 0, '%s edges ready'%len(configuration)
 
 
 @app.callback(Output('graph-description', 'children'), 
