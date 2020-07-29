@@ -14,6 +14,7 @@ import pickle
 import plotly.graph_objects as go
 import plotly.express as px
 import random as R
+import threading
 
 from dash.dependencies import Input, Output
 from graph.plot_graph import plot_graph
@@ -60,11 +61,21 @@ app.layout = html.Div(children=[
 ])
 
 
+def find_sparsenet_in_background():
+    for path in sparsenet_generator:
+        configuration.append(path)
+
+find_sparsenet_in_background_thread = threading.Thread(target=find_sparsenet_in_background)
+find_sparsenet_in_background_thread.daemon = True
+find_sparsenet_in_background_thread.start()
+
+
 @app.callback([Output('cytoscape', 'elements'), Output('path-lengths', 'figure'), Output('relayout', 'max_intervals')], 
               [Input('bfs-frame', 'value'), Input('sparsenet-start-path', 'value'), Input('sparsenet-end-path', 'value'), Input('relayout', 'n_intervals'), Input('enable-relayout', 'value')])
 def render_interactive_graph_plot(n, starting_path, ending_path, n_intervals, enable_relayout):
     enable_relayout = 'relayout' in enable_relayout
     global configuration
+    print('len =', len(configuration))
     if ending_path > len(configuration):
         try:
             configuration += itertools.islice(sparsenet_generator, ending_path - len(configuration))
