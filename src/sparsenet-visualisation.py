@@ -26,10 +26,6 @@ from graph.sparsenet import sparsenet
 # for simplicity, we'll treat this as a blackbox.
 # the only thing we need to know is that we get sparsenet_graph and sparsenet_fig_params at the end
 G = nx.read_graphml('../data/combined.graphml')
-with open('cache/pos.pickle', 'rb') as pos_file:
-    pos = pickle.load(pos_file)
-for node in G.nodes:
-    G.nodes[node]['pos'] = list(pos[node]) if node in pos else (R.random() * 2 - 1, R.random() * 2 - 1)
 source_files = ['../data/atu_only.gexf', '../data/mi_only.gexf']
 vertex_types = [set(nx.read_gexf(source_file).nodes) for source_file in source_files]
 connected_component = G.subgraph(sorted(list(nx.connected_components(G)), key=lambda comp: len(comp))[-1])
