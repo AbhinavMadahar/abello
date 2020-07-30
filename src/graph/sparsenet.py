@@ -3,6 +3,7 @@ SparseNet
 
 Reads a graph file and generates a SparseNet representation for it.
 It then outputs the SparseNet for it to STDOUT.
+Its first command-line argument is the location of the distance matrix.
 
 The graph file should start with a line that says how many vertices there are, and the remaining lines should be edges.
 Note that the first vertex is the 0 vertex and the last one is the (n-1)th vertex.
@@ -17,6 +18,8 @@ For example,
 
 import networkx as nx
 import numpy as np
+
+from sys import argv, stdin
 
 def point_farthest_from_configuration(distance_matrix: np.array, configuration: list, vertex_to_index: dict) -> tuple:
     """
@@ -61,16 +64,18 @@ def sparsenet(G: nx.Graph, distance_matrix: np.array, vertex_to_index: dict):
 # the program then outputs a list of lists representing the SparseNet.
 if __name__ == '__main__':
     G = nx.Graph()
-    with open('fabula/combined.csv', 'r') as combined:
-        next(combined)  # ignore the header
-        for edge in combined:
-            src, dest = edge[:-1].split(',')
-            G.add_edge(src, dest)
-            G.add_node(src)
-            G.add_node(dest)
+    
+    for edge in stdin:
+        src, dest = edge[:-1].split(',')
+        G.add_edge(src, dest)
+        G.add_node(src)
+        G.add_node(dest)
 
     connected_component = G.subgraph(sorted(list(nx.connected_components(G)), key=lambda comp: len(comp))[-1])
-    distance_matrix = np.load('distance_matrix.npy')
+    try:
+        distance_matrix = np.load(argv[1])
+    except:
+        distance_matrix = nx.floyd_warshall_numpy(connected_component)
     vertex_name_to_index = { node:i for i, node in enumerate(connected_component.nodes) }
     
     for path in sparsenet(G, distance_matrix, vertex_name_to_index):
