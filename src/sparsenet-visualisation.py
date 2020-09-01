@@ -42,20 +42,36 @@ bfs_from_leaves_frames = list(parallel_bfs(sparsenet_graph, leaves))
 
 positions = {}
 
-app = dash.Dash()
+app = dash.Dash(external_stylesheets=['https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css'])
 app.layout = html.Div(children=[
-    html.P(id='edges-ready', children='1 edge ready'),
-    html.Label('Frame of leaf-originated BFS'),
-    daq.NumericInput(id='bfs-frame', value=0, min=0, max=len(bfs_from_leaves_frames)),
-    html.Label('First path in SparseNet to include'),
-    daq.NumericInput(id='sparsenet-start-path', value=0, min=0, max=10 ** 6),
-    html.Label('Last path in SparseNet to include'),
-    daq.NumericInput(id='sparsenet-end-path', value=1, min=1, max=10 ** 6),
-    dcc.Checklist(id='enable-relayout', options=[{'label': 'Continue to relayout', 'value': 'relayout'}, ], value=['relayout']),
-    html.Div(id='graph-description'),
-    cyto.Cytoscape(id='cytoscape', elements=[], layout={'name': 'preset'}),
-    dcc.Graph(id='path-lengths'),
-    dcc.Interval(id='relayout', interval=1000, n_intervals=0)
+    html.Link(href='./index.css', rel='stylesheet'),
+    html.Div(className='container', children=[
+        html.Div(id='topbar', className='row', children=[
+            html.Div(className='three columns', children=''),
+            html.Div(className='six columns', children=[
+                html.Div(id='graph-description'),
+            ]),
+            html.Div(className='three columns'),
+        ]),
+        html.Div(className='row', children=[
+            html.Div(className='three columns', children=[
+                html.Label('Frame of leaf-originated BFS'),
+                daq.NumericInput(id='bfs-frame', value=0, min=0, max=len(bfs_from_leaves_frames)),
+                html.Label('First path in SparseNet to include'),
+                daq.NumericInput(id='sparsenet-start-path', value=0, min=0, max=10 ** 6),
+                html.Label('Last path in SparseNet to include'),
+                daq.NumericInput(id='sparsenet-end-path', value=1, min=1, max=10 ** 6),
+                dcc.Checklist(id='enable-relayout', options=[{'label': 'Continue to relayout', 'value': 'relayout'}, ], value=[]),
+            ]),
+            html.Div(className='six columns', children=[
+                cyto.Cytoscape(id='cytoscape', elements=[], layout={'name': 'preset'}),
+            ]),
+            html.Div(className='three columns', children=[
+                dcc.Graph(id='path-lengths'),
+            ]),
+        ]),
+        dcc.Interval(id='relayout', interval=1000, n_intervals=0)
+    ])
 ])
 
 
@@ -63,9 +79,12 @@ def find_sparsenet_in_background():
     for path in sparsenet_generator:
         configuration.append(path)
         
-        if len(configuration) % 100 == 0:
+        number_of_edges = sum(len(path) - 1 for path in configuration)
+        number_of_nodes = len(set(sum(configuration, [])))
+        print(number_of_nodes, number_of_edges, len(configuration))
+        if number_of_edges % (2 ** 10) == 0:
             sparsenet_graph = G.subgraph(sum(configuration, []))
-            positions[len(configuration)] = nx.spring_layout(sparsenet_graph, iterations=min(len(configuration), 500))
+            positions[len(configuration)] = nx.spring_layout(sparsenet_graph)
 
 
 find_sparsenet_in_background_thread = threading.Thread(target=find_sparsenet_in_background)
@@ -73,10 +92,9 @@ find_sparsenet_in_background_thread.daemon = True
 find_sparsenet_in_background_thread.start()
 
 
-@app.callback([Output('cytoscape', 'elements'), Output('path-lengths', 'figure'), Output('relayout', 'max_intervals'), Output('edges-ready', 'children')], 
+@app.callback([Output('cytoscape', 'elements'), Output('path-lengths', 'figure'), Output('relayout', 'max_intervals'), Output('graph-description', 'children')], 
               [Input('bfs-frame', 'value'), Input('sparsenet-start-path', 'value'), Input('sparsenet-end-path', 'value'), Input('relayout', 'n_intervals'), Input('enable-relayout', 'value')])
 def render_interactive_graph_plot(n, starting_path, ending_path, n_intervals, enable_relayout):
-    print(positions.keys())
     enable_relayout = 'relayout' in enable_relayout
     ending_path = min(ending_path, 100 * (ending_path // 100 + 1))
 
@@ -95,16 +113,12 @@ def render_interactive_graph_plot(n, starting_path, ending_path, n_intervals, en
 
     path_lengths = pd.Series(len(path) for path in configuration).value_counts()
     path_lengths = pd.DataFrame({'length': path_lengths.index, 'freq': path_lengths}).sort_index()
+    
+    graph_description = [
+        html.Strong('Edges'),
+        html.P(f'|V|: {str(len(nodes))}, |E|: {str(len(edges))}')
+    ]
 
-    return nodes + edges, px.line(path_lengths, x="length", y="freq", title='Number of paths of each length'), -1 if enable_relayout else 0, '%s edges ready'%len(configuration)
-
-
-@app.callback(Output('graph-description', 'children'), 
-              [Input('cytoscape', 'elements')])
-def update_number_of_vertices(elements):
-    number_of_nodes = len([element for element in elements if 'source' not in element['data']])
-    number_of_edges = len([element for element in elements if 'source' in element['data']])
-    return html.P(str(number_of_nodes) + ' vertices and ' + str(number_of_edges) + ' edges.')
-
+    return nodes + edges, px.line(path_lengths, x="length", y="freq", title='Number of paths of each length'), -1 if enable_relayout else 0, graph_description
 
 app.run_server(debug=True, host='ilab.cs.rutgers.edu', port=4405)

@@ -53,7 +53,7 @@ def sparsenet(G: nx.Graph, distance_matrix: np.array, vertex_to_index: dict):
     while True:
         farthest_from_config, closest_point_on_config = point_farthest_from_configuration(distance_matrix, configuration, vertex_to_index)
         path = nx.shortest_path(G, farthest_from_config, closest_point_on_config)
-        if len(path) < 3:
+        if len(path) < 2:
             break
         configuration.append(path)
         yield path
