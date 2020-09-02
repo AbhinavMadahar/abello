@@ -260,7 +260,10 @@ class UnionFind(object):
         """
         elts = np.array(self._elts)
         vfind = np.vectorize(self.find)
-        roots = vfind(elts)
+        try:
+            roots = vfind(elts)
+        except ValueError:
+            return []
         distinct_roots = set(roots)
         return [set(elts[roots == root]) for root in distinct_roots]
         # comps = []
