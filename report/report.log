@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2020.8.9)  3 SEP 2020 15:40
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2020.8.9)  10 SEP 2020 12:26
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -375,6 +375,25 @@ Package pdftex.def Info: ../src/plots/trial-2.png  used on input line 85.
 
 
 ]
+Underfull \hbox (badness 10000) in paragraph at lines 125--126
+[]\OT1/ptm/m/n/10 [1] Statista. 2020. Face-book: Ac-tive Users
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 125--126
+\OT1/ptm/m/n/10 World-wide | Statista. [on-line] Avail-able at:
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 125--126
+\OT1/ptm/m/n/10 <https://www.statista.com/statistics/264810/number-of-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 125--126
+\OT1/ptm/m/n/10 monthly-active-facebook-users-worldwide/> [Ac-cessed 10
+ []
+
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -386,21 +405,28 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 118.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 127.
 [2 <../src/plots/trial-0.png> <../src/plots/trial-1.png> <../src/plots/trial-2.
 png>]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 118.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 127.
  (./report.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 118.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 118.
-Package rerunfilecheck Info: File `report.out' has not changed.
-(rerunfilecheck)             Checksum: 7BE26995E0B08660DCE12AA9692DCCB2;342.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 118.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 127.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 127.
+
+
+Package rerunfilecheck Warning: File `report.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+Package rerunfilecheck Info: Checksums for `report.out':
+(rerunfilecheck)             Before: 7BE26995E0B08660DCE12AA9692DCCB2;342
+(rerunfilecheck)             After:  914503D845CAFC2564EC51CCA24C7A1E;387.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 127.
  ) 
 Here is how much of TeX's memory you used:
- 5943 strings out of 494805
- 92786 string characters out of 6178001
- 179860 words of memory out of 5000000
+ 5944 strings out of 494805
+ 92795 string characters out of 6178001
+ 180860 words of memory out of 5000000
  9239 multiletter control sequences out of 15000+600000
  36881 words of font info for 73 fonts, out of 8000000 for 9000
  81 hyphenation exceptions out of 8191
@@ -412,10 +438,10 @@ fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/t
 ype1/public/amsfonts/cm/cmsy8.pfb></usr/share/texlive/texmf-dist/fonts/type1/ur
 w/times/utmb8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmr8a.
 pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on report.pdf (2 pages, 98406 bytes).
+Output written on report.pdf (2 pages, 99620 bytes).
 PDF statistics:
- 87 PDF objects out of 1000 (max. 8388607)
- 69 compressed objects within 1 object stream
- 12 named destinations out of 1000 (max. 500000)
+ 89 PDF objects out of 1000 (max. 8388607)
+ 71 compressed objects within 1 object stream
+ 13 named destinations out of 1000 (max. 500000)
  72 words of extra memory for PDF output out of 10000 (max. 10000000)
 

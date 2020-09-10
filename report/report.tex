@@ -21,7 +21,7 @@ Email: \IEEEauthorrefmark{1}abhinav.madahar@rutgers.edu,
 % explain the problem
 Many data sets are graph data sets, and these are getting larger over time.
 Already, large graph data sets are too large to plot in entirety.
-For example, the Facebook social network graph has billions of vertices (people) and up to 5000 edges (friendships) per vertex; plotting this graph in full would be impossible and the results would be unintelligible.
+For example, the Facebook social network graph has billions of vertices (people) and up to 5000 edges (friendships) per vertex [1]; plotting this graph in full would be impossible and the results would be unintelligible.
 % explain existing solutions
 Instead, we can use an algorithm to ignore the minor details of the SparseNet to focus on the large-scale structure of the graph.
 Some algorithms do this for a connected graph by creating a minimum spanning tree (MST).
@@ -108,11 +108,20 @@ In the future, we want to consider how the SparseNet compares with other algorit
 We also want to compare it to other data sets from the real-world, particular those which are very large.
 We also can evaluate how quickly the algorithms run to get a better sense of time complexity.
 
+For very large graphs, running Floyd Warshall and related algorithms to find the distance matrix would use too much memory space.
+Instead, we can use parallel BFS, which uses less memory, making it better suited for very large graphs.
+
 We also had a large amount of code written in preparation of other, larger projects which could not be finished in the time of this REU.
 If someone would like to continue this work, then we have posted it publically on GitHub at \begin{href}https://github.com/AbhinavMadahar/abello\end{href}.
+The source code for our work can be found in the \textit{src} directory, written mostly as Jupyter notebooks.
+Our code is written for Python 3.
 
 \section{Acknowledgements}
 
 I appreciate the advice given to me by Prof. Abello and the help given by other members of the lab, including Fatima Al-Saadeh.
+
+\section{References}
+
+[1] Statista. 2020. Facebook: Active Users Worldwide | Statista. [online] Available at: <https://www.statista.com/statistics/264810/number-of-monthly-active-facebook-users-worldwide/> [Accessed 10 September 2020].
 
 \end{document}
